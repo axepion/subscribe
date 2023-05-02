@@ -1,4 +1,4 @@
-create TABLE users(
+create TABLE users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(255),
     password VARCHAR(255),
@@ -6,10 +6,11 @@ create TABLE users(
 );
 
 
-create TABLE subscribe(
+create TABLE subscribe (
     id SERIAL PRIMARY KEY,
     status INTEGER,
     date_first_sub DATE,
     date_last_sub DATE,
-    FOREIGN KEY (user_id) REFERENCES person (id)
+    user_id INTEGER,
+    FOREIGN KEY (user_id) REFERENCES users (id) 
 );
