@@ -6,8 +6,19 @@ const app = express();
 
 const port = 3000;
 
-app.use(express.json());
+const start = async () => {
 
-app.listen(port, () => console.log('server started'));
+    try {
 
-app.use('/auth', routeAuth);
+        app.use(express.json());
+        app.listen(port, () => console.log('server started'));
+        app.use('/auth', routeAuth);
+
+    } catch (err) {
+
+        console.log(err)
+
+    }
+}
+
+start();
