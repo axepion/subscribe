@@ -1,11 +1,24 @@
 const db = require('../db');
+const bcrypt = require('bcrypt');
+
 
 class AuthController {
     async registration(req, res) {
-        const { username, password } = req.body;
-        const dateRegistration = new Date();
-        const newPerson = await db.query('INSERT INTO users (username, password, date_registration) values ($1, $2, $3) RETURNING *', [username, password, dateRegistration])
-        res.json(newPerson.rows[0]);
+        try{
+            const { username, password } = req.body;
+            const dateRegistration = new Date();
+            const findUser = await db.query('SELECT * FROM users WHERE username = $1', [username])
+            if (findUser.rows[0]) {
+                res.send('username has already exist');
+            } else {
+                const newPerson = await db.query('INSERT INTO users (username, password, date_registration) values ($1, $2, $3) RETURNING *', [username, password, dateRegistration])
+                res.json(newPerson.rows[0])
+            }
+
+        } catch (err) {
+            console.log(err)
+            res.status(400).json({message: 'Registration error'})
+        }
     }
 
     async login(req, res) {
