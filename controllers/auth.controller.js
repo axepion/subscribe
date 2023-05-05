@@ -3,33 +3,47 @@ const bcrypt = require('bcrypt');
 
 
 class AuthController {
+
     async registration(req, res) {
-        try{
+
+        try {
             const { username, password } = req.body;
             const dateRegistration = new Date();
-            const findUser = await db.query('SELECT * FROM users WHERE username = $1', [username])
-            if (findUser.rows[0]) {
-                res.send('username has already exist');
-            } else {
-                const newPerson = await db.query('INSERT INTO users (username, password, date_registration) values ($1, $2, $3) RETURNING *', [username, password, dateRegistration])
-                res.json(newPerson.rows[0])
+            const checkUser = await db.query('SELECT * FROM users WHERE username = $1', [username])
+            if (!checkUser.rows[0]) {
+                const hashPassword = bcrypt.hashSync(password, 7)
+                await db.query('INSERT INTO users (username, password, date_registration) values ($1, $2, $3) RETURNING *', [username, hashPassword, dateRegistration])
+                return res.status(200).json({message: "Registration success"})
+                
             }
+            res.send('username has already exist');
 
         } catch (err) {
             console.log(err)
             res.status(400).json({message: 'Registration error'})
         }
+
     }
 
     async login(req, res) {
-        const { username, password } = req.body;
-        const authentic = await db.query('SELECT * FROM users where username = $1 AND password = $2', [username, password])
-        if(authentic.rows[0]) {
+
+        try {
+            const { username, password } = req.body;
+            const checkUser = await db.query('SELECT * FROM users where username = $1', [username])
+            if(!checkUser.rows[0]){
+                return res.send("Incorrect username")
+            } 
+            const comparePassword = bcrypt.compareSync(password, checkUser.rows[0].password)
+            if(!comparePassword) {
+                return res.send('Incorrect password!')
+            } 
             res.send('Authorization')
-        } 
-        else {
-            res.send('Incorrect username or password!')
+
+            } catch (err) {
+                console.log(err)
+                res.status(400).json({message: 'Registration error'})
         }
+
     }
 
     async getUsers(req, res) {
