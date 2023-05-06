@@ -1,12 +1,25 @@
-const db = require('../db');
 const bcrypt = require('bcrypt');
+const { validationResult } = require('express-validator');
+const jwt = require('jsonwebtoken');
+const { secret } = require('../config');
+const db = require('../db');
 
+const generateAccessToken = (id) => {
+    const payload = {
+        id
+    }
+    return jwt.sign(payload, secret, ({expiresIn: "24h"}))
+}
 
 class AuthController {
 
     async registration(req, res) {
 
         try {
+            const errors = validationResult(req)
+            if(!errors.isEmpty()){
+                return res.status(400).json({message: 'validate error', errors})
+            }
             const { username, password } = req.body;
             const dateRegistration = new Date();
             const checkUser = await db.query('SELECT * FROM users WHERE username = $1', [username])
@@ -31,13 +44,14 @@ class AuthController {
             const { username, password } = req.body;
             const checkUser = await db.query('SELECT * FROM users where username = $1', [username])
             if(!checkUser.rows[0]){
-                return res.send("Incorrect username")
+                return res.json({message: "Incorrect username"})
             } 
             const comparePassword = bcrypt.compareSync(password, checkUser.rows[0].password)
             if(!comparePassword) {
-                return res.send('Incorrect password!')
+                return res.json({message: "Incorrect password!"})
             } 
-            res.send('Authorization')
+            const token = generateAccessToken(checkUser.rows[0].id);
+            return res.json({ token })
 
             } catch (err) {
                 console.log(err)
